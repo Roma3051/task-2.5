@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <title>Weather</title>          
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1 class="head">foxmind<span>ed</span></h1>
+            <div class="search-box">
+                <i class="fa-solid fa-location-dot"></i>
+                <input type="text" placeholder="Enter your location">
+                <button class="fa-solid fa-magnifying-glass" id="search-button">Search</button>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <div class="weather-box">            
+                <div class="current-weather">
+                    <div class="details">
+                        <h1>Loading...</h1>
+                        <div class="additionally">
+                            <h2>-</h2>
+                            <h3>-</h3>
+                        </div>
+                    </div>
+                    <div class="details">
+                        <h5>-</h5>
+                        <h4>-</h4>
+                    </div>
+                    <div class="loading-container">
+                        <div class="loader"></div>
+                        <div class="error-message">City not found</div>
+                    </div>
+                    <div class="img-weather"><img class="img" src="spinner.gif" alt="Loading..."></div>
+                </div>     
+            </div>
+            <ul class="weather-boxs">
+                <!-- Data from JS -->
+            </ul>
+        </div>
+    </main>  
+    <script src="./js/script.js"></script>
+    <script src="./js/api.js"></script>
+</body>
+</html>

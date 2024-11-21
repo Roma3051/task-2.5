@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <title>Weather</title>          
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1 class="head">foxmind<span>ed</span></h1>
+            <div class="search-box">
+                <i class="fa-solid fa-location-dot"></i>
+                <input type="text" placeholder="Enter your location">
+                <button class="fa-solid fa-magnifying-glass">Search</button>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <div class="weather-box">
+                <div class="current-weather">
+                    <div class="details">
+                        <h1>-5°C</h1>
+                        <div class="additionally">
+                            <h2>Rain</h2>
+                            <h2>+8°C</h2>
+                        </div>
+                    </div>
+                    <div class="details">
+                        <h3>Clouds</h3>
+                        <h4>Kyiv, Ukraine</h4>
+                    </div>
+                    <div class="img-weather"><img src="./img/rain.svg" alt=""></div>
+                </div>
+            </div>
+            <div class="weather-boxs"></div>
+        </div>
+    </main>    
+    <script>
+"use strict";
+
+const weatherBoxes = document.querySelector('.weather-boxs');
+const cityInput = document.querySelector('.search-box input');
+const cityNameElement = document.querySelector('.details h4');
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await fetchAndUpdateWeather();
+    getLocationWeather();
+});
+
+cityInput.addEventListener('keypress', async (event) => {
+    if (event.key === 'Enter') {
+        await fetchAndUpdateWeather(cityInput.value.trim());
+    }
+});
+
+async function fetchAndUpdateWeather(city = 'Kyiv') {
+    const APIKey = '2b43ae33ba3ce9f3da098691f9279236';
+
+    try {
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${APIKey}`);
+        const data = await response.json();
+
+        if (data.cod === '404') {
+            handleNotFound();
+            return;
+        }
+
+        // Оновлюємо місто у головному шаблоні
+        cityNameElement.textContent = city;
+        renderFiveDayWeather(data.list);
+
+    } catch (error) {
+        console.error('Error fetching weather data:', error);
+        handleNotFound();
+    }
+}
+
+function getLocationWeather() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            try {
+                const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${APIKey}`);
+                const data = await response.json();
+                const city = data.name;
+
+                await fetchAndUpdateWeather(city);
+            } catch (error) {
+                console.error('Error fetching weather data based on location:', error);
+            }
+        }, (error) => {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    console.log("The user rejected the geolocation request.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    console.log("No location information available.");
+                    break;
+                case error.TIMEOUT:
+                    console.log("Geolocation service request timeout.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    console.log("An unknown error has occurred.");
+                    break;
+            }
+        });
+    } else {
+        console.error('Geolocation is not supported by this browser.');
+    }
+}
+
+
+async function fetchAndUpdateWeather(city = 'Kyiv') {
+    const APIKey = '2b43ae33ba3ce9f3da098691f9279236';
+
+    try {
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${APIKey}`);
+        const data = await response.json();
+
+        if (data.cod === '404') {
+            handleNotFound();
+            return;
+        }
+
+        // Оновлюємо головний шаблон з містом та погодою
+        updateCityAndWeatherDetails(city, data.list[0].main.temp, data.list[0].weather[0].description);
+        renderFiveDayWeather(data.list);
+
+    } catch (error) {
+        console.error('Error fetching weather data:', error);
+        handleNotFound();
+    }
+}
+
+function renderFiveDayWeather(forecasts) {
+    const today = new Date();
+    const daysToAdd = [1, 2, 3, 4, 5]; // Відступаємо на 1 день, щоб пропустити сьогоднішній день
+    let counter = 0;
+    weatherBoxes.innerHTML = ''; // Очищаємо попередні дані перед оновленням
+
+    forecasts.forEach(forecast => {
+        const date = new Date(forecast.dt * 1000);
+        if (daysToAdd.includes(date.getDay()) && counter < 5) { // Перевіряємо, що прогноз погоди є на наступний робочий день
+            const box = document.createElement('div');
+            box.classList.add(`day-${counter + 1}`);
+
+            const dayOfWeek = getDayOfWeek(date.getDay());
+
+            box.innerHTML = `
+                <h1 class="day-of-week">${dayOfWeek}</h1>
+                <img src="./img/${getWeatherIcon(forecast.weather[0].main)}.svg" alt="${forecast.weather[0].main}">
+                <h2>${forecast.weather[0].main}</h2>
+                <div class="info">
+                    <div class="day">
+                        <h3>Day</h3>
+                        <h4>${Math.round(forecast.main.temp)}°C</h4>
+                    </div>
+                    <div class="night">
+                        <h4>${Math.round(forecast.main.temp_min)}°C</h4>
+                        <h3>Night</h3>
+                    </div>
+                </div>
+            `;
+
+            weatherBoxes.appendChild(box);
+            counter++;
+        }
+    });
+}
+
+function handleNotFound() {
+    const errorMessage = document.createElement('div');
+    errorMessage.textContent = 'City not found';
+    errorMessage.classList.add('error-message');
+    weatherBoxes.innerHTML = ''; // Очищаємо попередні дані перед виведенням повідомлення
+    weatherBoxes.appendChild(errorMessage);
+}
+
+function updateCityAndWeatherDetails(city, temperature, weatherDescription) {
+    const cityElement = document.querySelector('.details h4');
+    const temperatureElement = document.querySelector('.details h1');
+    const weatherDescriptionElement = document.querySelector('.additionally h2');
+
+    cityElement.textContent = city;
+    temperatureElement.textContent = `${Math.round(temperature)}°C`;
+    weatherDescriptionElement.textContent = weatherDescription;
+}
+
+function getDayOfWeek(day) {
+    switch (day) {
+        case 0:
+            return 'Sun';
+        case 1:
+            return 'Mon';
+        case 2:
+            return 'Tue';
+        case 3:
+            return 'Wed';
+        case 4:
+            return 'Thu';
+        case 5:
+            return 'Fri';
+        case 6:
+            return 'Sat';
+        default:
+            return '';
+    }
+}
+
+function getWeatherImage(weather) {
+    switch (weather.toLowerCase()) {
+        case 'sunny':
+            return './img/sunny.svg';
+        case 'clouds':
+            return './img/cloudy.svg';
+        case 'rain':
+            return './img/rain.svg';
+        case 'snow':
+            return './img/snow.svg';
+        default:
+            return './img/default.svg';
+    }
+}
+
+    </script>
+</body>
+</html>
